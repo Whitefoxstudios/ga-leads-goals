@@ -15,7 +15,7 @@
           return this.nodeValue.replace(phones, ' <a href="tel:$1-$2-$3" class="phone-link-processed">$1-$2-$3</a>');
         } else {
           if(this.nodeValue.match(emails)){
-            return this.nodeValue.replace(emails, ' <a href="mailto:$1" class="email-link-processed">$1</a>');
+            return this.nodeValue.replace(emails, ' <a href="mailto:$1" class="email-link-processed" target="_blank">$1</a>');
           } else {
             return this.nodeValue;
           }
@@ -26,6 +26,13 @@
         $(o).attr('href', $(o).attr('href').replace(phones, '$1-$2-$3'));
         $(o).text($(o).text().replace(phones, '$1-$2-$3'));
         $(o).addClass('phone-link-processed');
+      });
+
+      $('a[href^="mailto"]:not(.email-link-processed)').each(function(i, o){
+        $(o).attr('href', $(o).attr('href').replace(emails, '$1'));
+        $(o).text($(o).text().replace(emails, '$1'));
+        $(o).addClass('email-link-processed');
+        $(o).attr('target', '_blank');
       });
 
       $('a[href^="mailto:"]').on('click', function(e){
@@ -41,15 +48,16 @@
 
 function trackLead(label){
   return {
-    'ga': checkGA(label),
-    'fb': checkFB(label)
+    'ga'  : checkGA(label),
+    'gtag': checkGTag(label),
+    'fb'  : checkFB(label)
   }
 }
 
 function checkFB(source){
   var o = false;
 
-  if(typeof fbq == 'function'){
+  if(typeof fbq !== undefined && typeof fbq == 'function'){
     fbq('track', 'Lead', {
       value: source,
     });
@@ -63,8 +71,23 @@ function checkFB(source){
 function checkGA(label){
   var o = false;
 
-  if(typeof ga == 'function'){
+  if(typeof ga !== undefined && typeof ga == 'function'){
     ga('send', 'event', 'lead', 'click', label);
+
+    o = true;
+  }
+
+  return o;
+}
+
+function checkGTag(label){
+  var o = false;
+
+  if(typeof gtag !== undefined && typeof gtag == 'function'){
+    gtag('event', 'click', {
+      'event_category' : 'lead',
+      'event_label' : label
+    });
 
     o = true;
   }
